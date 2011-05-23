@@ -37,6 +37,7 @@ create table url_fetch
 	datetime	integer unsigned not null, -- SELECT strftime('%s','now');
 	result		integer not null default 0, -- http code/0=not tried/-1=discon/-2=timeout
 	msec		integer unsigned not null default 0,
+	bytes		integer unsigned not null default 0,
 	foreign key (run_id) references run(id),
 	foreign key (url_id) references url(id)
 );
