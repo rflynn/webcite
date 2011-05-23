@@ -57,7 +57,6 @@ class URL:
 	def __init__(self, url, depth=0, urlfrom=None):
 		self.url = url
 		self.depth = depth # how many layers deep was i found?
-		self.size = 0
 		self.error = None
 		self.resp = None
 		self._db_url_id = None
@@ -79,7 +78,6 @@ class URL:
 	# on error code will be set appropriately and content will be empty
 	def fetched(self, resp):
 		self.resp = resp
-		self.size = len(resp.content)
 		soup = BeautifulSoup(resp.content)
 		for tag,attr,save in [
 			('a',     'href', self.ahref),
@@ -115,7 +113,7 @@ class URL:
 		return any(urlobjs[dep].is_error() for dep in self.dependencies())
 
 	def __str__(self):
-		return unicode('(%s, depth=%u, code=%u, size=%u)' % (self.url, self.depth, self.resp.code, self.size))
+		return unicode('(%s, depth=%u, code=%u, size=%u)' % (self.url, self.depth, self.resp.code, self.resp.size()))
 	def __repr__(self):
 		return str(self)
 
@@ -145,8 +143,8 @@ class URL:
 		db = db_conn()
 		url_id = self.db_url_id(db)
 		cur = db.cursor()
-		cur.execute('insert into url_fetch (run_id,url_id,datetime,result,msec) values (?,?,?,?,?)',
-			(run_id, url_id, int(self.resp.start), self.resp.result, self.resp.msec))
+		cur.execute('insert into url_fetch (run_id,url_id,datetime,result,msec,bytes) values (?,?,?,?,?,?)',
+			(run_id, url_id, int(self.resp.start), self.resp.result, self.resp.msec, self.resp.size()))
 		fetch_id = db.execute('select last_insert_rowid()').fetchone()[0]
 		cur.executemany('insert into url_fetch_header(url_fetch_id,header,value) values (?,?,?)',
 			([(fetch_id, h, v) for h,v in self.resp.headers ]))
@@ -212,7 +210,7 @@ values (?,?,?,?)
 			self.urlcnt += 1
 			try:
 				host = urlparse.urlparse(url)[1]
- 				if not self.should_spider(urlto):
+				if not self.should_spider(url):
 					continue
 				allowed = self.host_allowed(host)
 				page = Fetcher(timeout=self.max_url_sec, verbose=self.verbose)
@@ -251,13 +249,29 @@ class Fetcher:
 		self.content = u''
 		self.start = 0
 		self.msec = 0
+		self.header_size = 0
 		self.result = 0 # 0=not tried, -1=discon, -2=timeout
 
 	def is_html(self):
-		c = [v for h,v in self.headers if h == 'Content-Type']
+		c = [v for h,v in self.headers if h == 'content-type']
 		return any(
 			v.startswith('text/html') or v.startswith('application/xhtml')
 				for v in c)
+
+	def size(self):
+		return self.header_size + int(self.content_size())
+
+	def header(self, key, default=''):
+		key = key.lower()
+		h = [v for h,v in self.headers if h == key]
+		if h:
+			return h[0]
+		return default
+
+	def content_size(self):
+		if self.content:
+			return len(self.content)
+		return self.header('content-length', 0)
 
 	def fetch(self, url, full=True):
 		self.start = time.time()
@@ -267,10 +281,18 @@ class Fetcher:
 			req.get_method = lambda : 'HEAD'
 			req.add_header('User-Agent', AGENT)
 			req.add_header('Accept', '*/*')
+			req.add_header('Accept-Encoding:', 'compress, gzip')
 			self.code = 200
 			self.result = 200
 			res = urllib2.urlopen(req, None, self.timeout)
-			self.headers = [tuple(h.rstrip('\r\n').split(': ',1)) for h in res.info().headers]
+			self.headers = []
+			for h in res.info().headers:
+				try:
+					k,v = h.rstrip('\r\n').split(': ',1)
+					self.headers.append((k.lower(),v))
+				except:
+					pass
+			self.header_size = sum(len(h) for h in res.info().headers)
 			# fetch contents if necessary
 			if self.is_html() and full:
 				req.get_method = lambda : 'GET'
