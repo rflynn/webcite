@@ -1,4 +1,12 @@
 
+Setup:
+	make database
+
+Example use:
+
+	./crawl.py --verbose --max-urls=50 http://example.com/
+	make graph-links
+
 Website toolkit for quantifying website things, diagnosing various issues
 
 	Check for...
