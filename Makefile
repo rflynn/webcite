@@ -1,7 +1,7 @@
 
-graph: graph.svg
-	./graph-dep-link.py > graph.dot && fdp -Tsvg -o graph.svg graph.dot
+graph-links:
+	./graph-links.py > graph-links.dot && fdp -Tsvg -o graph-links.svg graph-links.dot
 
-database: spider.sqlite3.bin
-	sqlite3 spider.sqlite3.bin < spider.sql
+database:
+	$(MAKE) -C data database
 
