@@ -47,7 +47,7 @@ VERSION = "%prog v" + __version__
 # pretend to be IE9
 AGENT = 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)'
 
-DBConn = sqlite3.connect('spider.sqlite3.bin')
+DBConn = sqlite3.connect('data/db.crawl.sqlite3.bin')
 # singleton database connection
 def db_conn():
 	global DBConn
