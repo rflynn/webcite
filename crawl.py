@@ -164,7 +164,8 @@ class URL:
 
 class Crawler:
 
-	def __init__(self, root, max_depth, hostmask=[], max_urls=0, max_bytes=0, max_url_sec=5):
+	def __init__(self, root, max_depth, hostmask=[], max_urls=0, max_bytes=0, max_url_sec=5, verbose=False):
+		self.verbose = verbose
 		self.root = root
 		self.max_depth = float('inf') if max_depth == 0 else max_depth
 		self.max_urls  = float('inf') if max_urls  == 0 else max_urls
@@ -214,7 +215,7 @@ values (?,?,?,?)
  				if not self.should_spider(urlto):
 					continue
 				allowed = self.host_allowed(host)
-				page = Fetcher(timeout=self.max_url_sec)
+				page = Fetcher(timeout=self.max_url_sec, verbose=self.verbose)
 				page.fetch(url, allowed)
 				self.bytecnt += len(page.content)
 				urlobj = self.urls[url]
@@ -241,7 +242,8 @@ values (?,?,?,?)
 			print >> sys.stderr, '# LIMIT REACHED max_bytes (%s >= %s)' % (bytecnt, self.max_bytes)
 
 class Fetcher:
-	def __init__(self, timeout):
+	def __init__(self, timeout, verbose=False):
+		self.verbose = verbose
 		self.timeout = timeout
 		self.error = None
 		self.headers = []
@@ -276,6 +278,8 @@ class Fetcher:
 				h = handle.open(req)
 				self.content = unicode(h.read(), 'utf-8', errors='replace')
 				h.close()
+			if self.verbose:
+				print '# %s %s' % (self.code, url)
 		except urllib2.HTTPError, error:
 			self.code = error.code
 			self.result = error.code
@@ -301,11 +305,9 @@ def parse_options():
 
 	parser = optparse.OptionParser(usage=USAGE, version=VERSION)
 
-	parser.add_option("-q", "--quiet",
-			action="store_true", default=False, dest="quiet",
-			help="Enable quiet mode")
-	parser.add_option('-d', '--depth', action='store', type='int', default=30, dest='depth',
-		help='Maximum depth to traverse')
+	parser.add_option('-q', '--quiet', action='store_true', default=False, help='Enable quiet mode')
+	parser.add_option('-v', '--verbose', action='store_true', default=False, help='Display each URL as it is processed')
+	parser.add_option('-d', '--depth', action='store', type='int', default=30, dest='depth', help='Maximum depth to traverse')
 	parser.add_option('--host', action='append', default=[], help='Additional host domain(s) to crawl')
 	parser.add_option('--url-timeout', action='store', default=5, help='Maximum time in seconds to wait for a URL response')
 	parser.add_option('--max-urls', action='store', type='int', default=0, help='Maximum URLs to fetch')
@@ -335,7 +337,7 @@ def main():
 	print '# Started %s' % (time.strftime('%x %X'),)
 	print '# Crawling %s (Max Depth: %d)' % (url, depth)
 
-	crawler = Crawler(url, depth, hostmask=opts.host, max_urls=max_urls, max_url_sec=max_url_sec)
+	crawler = Crawler(url, depth, hostmask=opts.host, max_urls=max_urls, max_url_sec=max_url_sec, verbose=opts.verbose)
 	crawler.crawl()
 
 	eTime = time.time()
