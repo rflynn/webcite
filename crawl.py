@@ -68,6 +68,7 @@ class URL:
 		self.link = set()
 		self.style = set()
 		self.script = set()
+		self.embed = set()
 		self.frame = set()
 		self.iframe = set()
 
@@ -85,6 +86,7 @@ class URL:
 			('img',   'src',  self.img),
 			('style', 'src',  self.style),
 			('script','src',  self.script),
+			('embed','src',   self.embed),
 			('frame', 'src',  self.frame),
 			('iframe','src',  self.iframe) ]:
 			tags = soup(tag)
@@ -97,11 +99,11 @@ class URL:
 
 	def all_links(self):
 		return itertools.chain.from_iterable([
-			self.ahref, self.img, self.link, self.style, self.script, self.frame, self.iframe])
+			self.ahref, self.img, self.link, self.style, self.script, self.embed, self.frame, self.iframe])
 
 	def dependencies(self):
 		return itertools.chain.from_iterable([
-			self.img, self.link, self.style, self.script, self.frame, self.iframe])
+			self.img, self.link, self.style, self.script, self.embed, self.frame, self.iframe])
 
 	def errors(self):
 		return self.broken_links() or self.dependency_errors()
@@ -215,7 +217,7 @@ values (?,?,?,?)
 				allowed = self.host_allowed(host)
 				page = Fetcher(timeout=self.max_url_sec, verbose=self.verbose)
 				page.fetch(url, allowed)
-				self.bytecnt += len(page.content)
+				self.bytecnt += page.size()
 				urlobj = self.urls[url]
 				urlobj.fetched(page)
 				if allowed:
