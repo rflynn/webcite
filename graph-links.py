@@ -3,8 +3,8 @@
 # ex: set ts=4 noet:
 
 """
-Extract data from the latest spider run and output a graphviz .dot file
-color-coding URLs red,orange,yellow or gray depending on what's broken
+Extract data from the latest spider run from the database and output a graphviz .dot file
+color-coding URLs based on status
 """
 
 import sqlite3
@@ -15,7 +15,7 @@ RunAdjust = 0
 if sys.argv[1:]:
 	RunAdjust = int(sys.argv[1])
 
-Conn = sqlite3.connect('spider.sqlite3.bin')
+Conn = sqlite3.connect('data/db.crawl.sqlite3.bin')
 Cur = Conn.cursor()
 
 Run_Id,URL_Timeout,Root_Host,Root_URL,Hosts_Allowed = Cur.execute("""
@@ -37,6 +37,7 @@ digraph {
 	node [fontname="Arial",fontsize=9,color=green3,style=filled]
 	edge [arrowsize=0.7,color=gray40]
 	ratio=compress
+	compound=true
 	label="Root URL: %s\\nHosts: %s\\nTimeout: %u sec"
 	{ rank = min;
     Legend [shape=none, margin=0, label=<
@@ -69,7 +70,7 @@ select
 	,sum(df.result < 0 or df.result >= 400) > 0		-- broken dependencies
 	,sum(lf.result < 0 or lf.result >= 400) > 0		-- broken links
 from url u
-left join url_fetch  f on f.url_id = u.id
+     join url_fetch  f on f.url_id = u.id
 left join url_depend d on d.url_fetch_id = f.id
 left join url_link   l on l.url_fetch_id = f.id
 left join url_fetch df on df.url_id = d.url_target_id
