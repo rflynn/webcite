@@ -132,7 +132,7 @@ class URL:
 			else:
 				cur.execute('insert into url(scheme,host,path,params,query,fragment)values(?,?,?,?,?,?)', u)
 				self._db_url_id = cur.lastrowid
-				db.commit()
+				#db.commit()
 			#print('url=%s u=%s id=%s' % (self.url, u, self._db_url_id))
 		assert self._db_url_id
 		return self._db_url_id
@@ -160,7 +160,7 @@ class URL:
 			to_id = urlobjs[to].db_url_id(db)
 			cur.execute( 'insert into url_link(url_fetch_id,url_target_id) values (?,?)',
 				(fetch_id, to_id))
-		db.commit()
+		#db.commit()
 
 class Crawler:
 
@@ -234,6 +234,8 @@ values (?,?,?,?)
 			except Exception, e:
 				print "ERROR: Can't process url '%s' (%s)" % (url, e)
 				print format_exc()
+			if self.urlcnt % 20 == 0:
+				db_conn().commit()
 
 		# announce a limit we've hit, if any
 		if self.urlcnt >= self.max_urls:
