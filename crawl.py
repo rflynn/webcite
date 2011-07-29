@@ -47,6 +47,8 @@ VERSION = "%prog v" + __version__
 # pretend to be IE9
 AGENT = 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)'
 
+MAX_CONTENT_SIZE = 1024 * 1024
+
 DBConn = sqlite3.connect('data/db.crawl.sqlite3.bin')
 # singleton database connection
 def db_conn():
@@ -302,7 +304,7 @@ class Fetcher:
 				req.get_method = lambda : 'GET'
 				handle = urllib2.build_opener()
 				h = handle.open(req)
-				self.content = unicode(h.read(), 'utf-8', errors='replace')
+				self.content = unicode(h.read(MAX_CONTENT_SIZE), 'utf-8', errors='replace')
 				h.close()
 			if self.verbose:
 				print '# %s %s' % (self.code, url)
