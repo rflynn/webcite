@@ -288,6 +288,7 @@ class Fetcher:
 		self.start = time.time()
 		try:
 			# fetch header
+			url = url.replace(' ', '%20') # FIXME: manually escape spaces. i'm doing it wrong.
 			req = urllib2.Request(url)
 			req.get_method = lambda : 'HEAD'
 			req.add_header('User-Agent', AGENT)
