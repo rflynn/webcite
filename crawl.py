@@ -290,7 +290,7 @@ class Fetcher:
 			req.get_method = lambda : 'HEAD'
 			req.add_header('User-Agent', AGENT)
 			req.add_header('Accept', '*/*')
-			req.add_header('Accept-Encoding:', 'compress, gzip')
+			#req.add_header('Accept-Encoding:', 'compress, gzip')
 			self.code = 200
 			self.result = 200
 			res = urllib2.urlopen(req, None, self.timeout)
