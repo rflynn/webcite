@@ -95,7 +95,7 @@ class URL:
 			for t in tags:
 				a = t.get(attr)
 				if a:
-					url = urlparse.urljoin(self.url, escape(a))
+					url = urlparse.urljoin(self.url, escape(a)) # FIXME: does escape() do anything?
 					save.add(url)
 			save = frozenset(save)
 
