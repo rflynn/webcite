@@ -207,6 +207,8 @@ values (?,?,?,?)
 		q = Queue()
 		q.put(self.root)
 		while self.urlcnt < self.max_urls:
+			if self.urlcnt % 20 == 0:
+				print 'urls q.size:', q.qsize()
 			try:
 				url = q.get_nowait()
 			except QueueEmpty:
