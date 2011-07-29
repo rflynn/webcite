@@ -237,7 +237,10 @@ values (?,?,?,?)
 				print "ERROR: Can't process url '%s' (%s)" % (url, e)
 				print format_exc()
 			if self.urlcnt % 20 == 0:
-				db_conn().commit()
+				try:
+					db_conn().commit()
+				except sqlite3.OperationalError:
+					pass
 
 		# announce a limit we've hit, if any
 		if self.urlcnt >= self.max_urls:
